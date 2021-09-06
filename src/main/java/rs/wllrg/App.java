@@ -17,41 +17,41 @@ package rs.wllrg;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.internal.gtk.GTK;
 
 public class App {
-   static void createShells(Shell parent, int x, int y, int cx, int cy, int level, String name) {
-       int shellCy = cy / 2;
+
+    static Shell createChild(Display display, Shell parentShell, int x, int y, int cx, int cy, int level) {
 
        FillLayout layout = new FillLayout();
        layout.marginHeight = 10;
        layout.marginWidth = 10;
 
-       for (int i = 0; i < 2; i++) {
-           String shellName = name + (char)('0' + i);
-           int shellStyle = (level == 0) ? SWT.SHELL_TRIM : SWT.DIALOG_TRIM;
+       int shellStyle = (level == 0) ? SWT.SHELL_TRIM : SWT.DIALOG_TRIM;
 
-           Shell shell = new Shell(parent, shellStyle);
-           shell.setLayout(layout);
-           shell.setText(shellName);
+       Shell shell = new Shell(display, shellStyle);
+       shell.setLayout(layout);
+       shell.setText("Child");
 
-           Button button = new Button(shell, SWT.NONE);
-           button.setText("Hide");
-           button.addListener(SWT.Selection, e -> shell.setVisible(false));
+       Button button = new Button(shell, SWT.NONE);
+       button.setText("focus parent");
+       button.addListener(SWT.Selection, e -> {
+           System.out.println("Setting focus on parent.");
+           parentShell.forceFocus();
+       });
 
-           int shellY = y + i*shellCy;
-           shell.setBounds(x, shellY, cx, shellCy);
-           shell.open();
+       shell.setBounds(x, y, cx, cy);
+       shell.open();
 
-           shell.addListener(SWT.Activate, e -> {
-               System.out.format("%s was activated\n", shellName);
-           });
+       shell.addListener(SWT.Activate, e -> {
+           System.out.println("Child was activated.");
+       });
+       return shell;
 
-           if (level < 1)
-               createShells(shell, x + cx, shellY, cx, shellCy, level + 1, shellName);
-       }
    }
 
    public static void main (String [] args) {
+       System.out.println("GTK Version: " + GTK.gtk_get_major_version() + "." + GTK.gtk_get_minor_version() + "." + GTK.gtk_get_micro_version());
        Display display = new Display ();
 
        FillLayout layout = new FillLayout();
@@ -60,33 +60,27 @@ public class App {
 
        Shell shell = new Shell(display);
        shell.setLayout(layout);
-       shell.setText("Test");
+       shell.setText("Parent");
 
-       Label hint = new Label(shell, SWT.NONE);
-       hint.setText(
-           "How to reproduce Bug 563555:\n" +
-           "1. IMPORTANT: Click this Shell's contents\n" +
-           "2. IMPORTANT: Move other Shell to obscure this Shell\n" +
-           "3. Close other Shell with (x) button\n" +
-           "4. There will be a quick GNOME popup on top of screen:\n" +
-           "   \"Test\" is ready\n" +
-           "\n" +
-           "Verifying that `Shell.fixActiveShell()` was not needed:\n" +
-           "1. Choose any Shell you like\n" +
-           "2. Click that Shell to activate it\n" +
-           "3. Close/hide that Shell\n" +
-           "4. Shell's parent Shell will be activated\n" +
-           "   This happens with or without `Shell.fixActiveShell()`"
-       );
+       Button button = new Button(shell, SWT.NONE);
+       button.setText("focus child");
 
        final int x = 100;
        final int y = 100;
-       final int cx = 600;
-       final int cy = 800;
+       final int cx = 200;
+       final int cy = 200;
        shell.setBounds(x, y, cx, cy);
        shell.open();
 
-       createShells(shell, x + cx, y, 200, cy, 0, "Shell#");
+       Shell childShell = createChild(display, shell, x + cx, y, cx, cy, 0);
+       shell.addListener(SWT.Activate, e -> {
+           System.out.format("Root shell was activated\n");
+
+       });
+       button.addListener(SWT.Selection, e -> {
+           System.out.println("Setting focus on child.");
+           childShell.forceFocus();
+       });
 
        while (!shell.isDisposed()) {
            if (!display.readAndDispatch ()) display.sleep ();
