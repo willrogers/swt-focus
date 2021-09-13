@@ -1,25 +1,19 @@
 package rs.wllrg;
 
-/*******************************************************************************
- * Copyright (c) 2020 Syntevo and others.
- *
- * This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License 2.0
- * which accompanies this distribution, and is available at
- * https://www.eclipse.org/legal/epl-2.0/
- *
- * SPDX-License-Identifier: EPL-2.0
- *
- * Contributors:
- *     Syntevo - initial API and implementation
- *******************************************************************************/
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.internal.gtk.GTK;
 
-public class App {
+/**
+ * A small app that launches two windows.
+ *
+ * Each has a button that transfers focus to the other.
+ * The behaviour on Gnome Shell differs between SWT versions 3.112.0
+ * and 3.113.0 as an unintended consequence of this change:
+ * https://bugs.eclipse.org/bugs/show_bug.cgi?id=371545
+ */
+public class WorkspaceSwitchingApp {
 
     static Shell createChild(Display display, Shell parentShell, int x, int y, int cx, int cy, int level) {
 
